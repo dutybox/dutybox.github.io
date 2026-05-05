@@ -1,0 +1,24 @@
+title: 내일근무뭐지?
+description: 승무원과 교대근무자를 위한 근무 스케줄 관리 앱
+theme: jekyll-theme-cayman
+markdown: kramdown
+kramdown:
+  input: GFM
+  hard_wrap: false
+  syntax_highlighter: rouge
+
+plugins:
+  - jekyll-relative-links
+
+relative_links:
+  enabled: true
+  collections: false
+
+include:
+  - legal
+
+exclude:
+  - design.md
+  - roadmap.md
+  - handoff-2026-04-15.md
+  - tube
