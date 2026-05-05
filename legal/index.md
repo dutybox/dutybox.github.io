@@ -1,6 +1,6 @@
 ---
 layout: default
-title: 약관 및 정책 — 내일근무뭐지?
+title: 약관 및 정책 — Dutybox
 ---
 
 # 약관 및 정책
