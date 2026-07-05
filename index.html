@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0b1220" />
+<title>DutyBox 광고 안내 — 핵심 사용자에게 직접 도달하세요</title>
+<meta name="description" content="DutyBox는 근무 스케줄 관리 앱입니다. 실시간 오디언스 지표를 확인하고 광고를 문의하세요." />
+<meta property="og:title" content="DutyBox 광고 안내" />
+<meta property="og:description" content="핵심 사용자에게 직접 도달하는 광고 슬롯 — 실시간 오디언스 지표" />
+<!--
+  ┌─────────────────────────────────────────────────────────────┐
+  │ DutyBox 광고주 안내 + 실시간 오디언스 대시보드 (단일 파일)      │
+  │                                                               │
+  │ 배포 3단계:                                                    │
+  │  1) Supabase: supabase/migrations/0074_public_ad_audience_    │
+  │     stats.sql 를 `supabase db push` (naeilgeunmu/ 에서).       │
+  │  2) 아래 CONFIG.SUPABASE_ANON_KEY 에 .env 의 SUPABASE_ANON_KEY │
+  │     값을 붙여넣기 (anon 키는 공개용이라 웹에 노출 OK).           │
+  │  3) 이 파일을 dutybox.github.io 리포에 /advertise/index.html   │
+  │     로 업로드(웹 UI push).                                     │
+  │                                                               │
+  │ 키/RPC 설정 전에도 "예시 데이터"로 화면이 완성되어 보입니다.     │
+  └─────────────────────────────────────────────────────────────┘
+-->
+<style>
+  :root{
+    --bg0:#0b1220; --bg1:#0f1830; --card:rgba(255,255,255,.045);
+    --line:rgba(255,255,255,.09); --ink:#e8eefc; --muted:#9fb0cf;
+    --accent:#38bdf8; --accent2:#22d3ee; --good:#34d399; --warn:#fbbf24;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:"Pretendard","Apple SD Gothic Neo",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    background:radial-gradient(1200px 600px at 50% -10%,#16233f 0%,var(--bg1) 45%,var(--bg0) 100%);
+    color:var(--ink); min-height:100vh; line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:28px 18px calc(48px + env(safe-area-inset-bottom));}
+  .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px;}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:-.02em;}
+  .brand .logo{width:34px;height:34px;border-radius:9px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    display:grid;place-items:center;color:#04121f;font-weight:900;}
+  .badge{font-size:12px;font-weight:700;padding:6px 11px;border-radius:999px;border:1px solid var(--line);}
+  .badge.live{color:var(--good);border-color:rgba(52,211,153,.35);background:rgba(52,211,153,.08);}
+  .badge.live::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;
+    background:var(--good);margin-right:6px;vertical-align:middle;animation:pulse 1.6s infinite;}
+  .badge.demo{color:var(--warn);border-color:rgba(251,191,36,.3);background:rgba(251,191,36,.07);}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(52,211,153,.5);}70%{box-shadow:0 0 0 8px rgba(52,211,153,0);}100%{box-shadow:0 0 0 0 rgba(52,211,153,0);}}
+
+  h1{font-size:26px;line-height:1.28;letter-spacing:-.03em;margin:6px 0 8px;}
+  h1 .hl{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .lede{color:var(--muted);font-size:15px;margin:0 0 8px;}
+  .updated{color:var(--muted);font-size:12.5px;margin:2px 0 22px;}
+
+  .section-title{font-size:13px;font-weight:800;color:var(--muted);letter-spacing:.04em;
+    text-transform:uppercase;margin:26px 4px 12px;}
+
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 16px 14px;}
+  .stat .k{color:var(--muted);font-size:12.5px;font-weight:600;margin-bottom:6px;}
+  .stat .v{font-size:30px;font-weight:850;letter-spacing:-.03em;font-variant-numeric:tabular-nums;}
+  .stat .v.big{font-size:34px;}
+  .stat .sub{color:var(--muted);font-size:11.5px;margin-top:4px;}
+  .stat.hero{grid-column:1 / -1;background:
+    linear-gradient(135deg,rgba(56,189,248,.12),rgba(34,211,238,.05)),var(--card);
+    border-color:rgba(56,189,248,.25);}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;}
+  .bar-row{display:grid;grid-template-columns:82px 1fr 46px;align-items:center;gap:10px;margin:9px 0;}
+  .bar-label{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .bar-track{height:9px;border-radius:6px;background:rgba(255,255,255,.06);overflow:hidden;}
+  .bar-fill{display:block;height:100%;border-radius:6px;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    transition:width .8s cubic-bezier(.22,1,.36,1);}
+  .bar-pct{font-size:12.5px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums;}
+
+  .spark-wrap{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;}
+  .spark-wrap .cap{color:var(--muted);font-size:12px;}
+  svg#spark{width:100%;height:64px;display:block;}
+
+  /* 배치 미리보기 (앱 하단 320x50 배너 자리) */
+  .preview{margin-top:8px;}
+  .phone{max-width:280px;margin:0 auto;border:1px solid var(--line);border-radius:22px;overflow:hidden;
+    background:#0a1424;box-shadow:0 20px 50px rgba(0,0,0,.4);}
+  .phone .screen{height:150px;background:
+    linear-gradient(180deg,#101c33,#0c1526);position:relative;display:flex;align-items:flex-end;}
+  .phone .fakecal{position:absolute;inset:14px 14px 62px;border-radius:10px;
+    background:repeating-linear-gradient(0deg,transparent,transparent 22px,rgba(255,255,255,.04) 22px,rgba(255,255,255,.04) 23px),
+    repeating-linear-gradient(90deg,transparent,transparent 32px,rgba(255,255,255,.04) 32px,rgba(255,255,255,.04) 33px);
+    opacity:.7;}
+  .phone .adslot{width:100%;height:50px;background:linear-gradient(90deg,rgba(56,189,248,.18),rgba(34,211,238,.12));
+    border-top:1px dashed rgba(56,189,248,.5);display:grid;place-items:center;
+    color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.02em;}
+  .preview .note{color:var(--muted);font-size:12px;text-align:center;margin-top:10px;}
+
+  .cta{margin-top:26px;background:linear-gradient(135deg,rgba(56,189,248,.14),rgba(34,211,238,.06));
+    border:1px solid rgba(56,189,248,.3);border-radius:18px;padding:22px;text-align:center;}
+  .cta h2{margin:0 0 6px;font-size:19px;letter-spacing:-.02em;}
+  .cta p{margin:0 0 14px;color:var(--muted);font-size:14px;}
+  .btn{display:inline-block;padding:13px 22px;border-radius:12px;font-weight:800;text-decoration:none;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));color:#04121f;}
+  .points{display:grid;grid-template-columns:1fr;gap:8px;margin:14px 0 0;}
+  .point{display:flex;gap:9px;align-items:flex-start;color:var(--muted);font-size:13.5px;text-align:left;}
+  .point b{color:var(--ink);font-weight:700;}
+  .check{color:var(--accent);font-weight:900;flex:none;}
+
+  footer{margin-top:30px;color:var(--muted);font-size:11.5px;text-align:center;line-height:1.7;}
+  footer a{color:var(--muted);}
+  @media(min-width:560px){ .points{grid-template-columns:1fr 1fr;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div class="brand"><span class="logo">D</span><span>DutyBox</span></div>
+    <span id="livebadge" class="badge demo">예시 데이터</span>
+  </div>
+
+  <h1>정확한 <span class="hl">타겟</span>에게<br>직접 도달하는 광고 슬롯</h1>
+  <p class="lede">DutyBox는 AI 근무 스케줄 관리 앱입니다. 광고는 앱 메인 화면 하단 배너 한 자리 —
+    타겟이 명확한 오디언스에게 노출됩니다.</p>
+  <p class="updated" id="updated">실데이터 연결 대기 중</p>
+
+  <div class="section-title">실시간 오디언스 지표</div>
+  <div class="grid">
+    <div class="stat hero">
+      <div class="k">전체 커뮤니티 규모</div>
+      <div class="v big" id="v-community" data-val="0">—</div>
+      <div class="sub" id="v-new">가입한 활성 사용자</div>
+    </div>
+    <div class="stat">
+      <div class="k">월 활성 사용자 (MAU)</div>
+      <div class="v" id="v-mau" data-val="0">—</div>
+      <div class="sub">최근 30일</div>
+    </div>
+    <div class="stat">
+      <div class="k">일 활성 사용자 (DAU)</div>
+      <div class="v" id="v-dau" data-val="0">—</div>
+      <div class="sub">최근 24시간</div>
+    </div>
+    <div class="stat">
+      <div class="k">주 활성 사용자 (WAU)</div>
+      <div class="v" id="v-wau" data-val="0">—</div>
+      <div class="sub">최근 7일</div>
+    </div>
+    <div class="stat">
+      <div class="k">스티키니스 (DAU/MAU)</div>
+      <div class="v" id="v-sticky" data-val="0">—</div>
+      <div class="sub">재방문 밀착도</div>
+    </div>
+  </div>
+
+  <div class="section-title">오디언스 구성 (소속 항공사)</div>
+  <div class="card"><div id="mix"></div></div>
+
+  <div class="section-title">최근 14일 활동 추세</div>
+  <div class="card">
+    <div class="spark-wrap">
+      <svg id="spark" viewBox="0 0 300 64" preserveAspectRatio="none">
+        <defs><linearGradient id="sparkgrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#0b1220"/>
+        </linearGradient></defs>
+      </svg>
+    </div>
+    <div class="spark-wrap" style="margin-top:6px;">
+      <span class="cap">14일 전</span><span class="cap">스케줄 업로드 활동</span><span class="cap">오늘</span>
+    </div>
+  </div>
+
+  <div class="section-title">광고 노출 위치</div>
+  <div class="card preview">
+    <div class="phone">
+      <div class="screen">
+        <div class="fakecal"></div>
+        <div class="adslot">여기에 광고 (320 × 50)</div>
+      </div>
+    </div>
+    <p class="note">앱 메인 달력 화면 최하단 고정 배너 — 사용자가 매일 스케줄을 확인할 때마다 노출됩니다.</p>
+  </div>
+
+  <div class="cta">
+    <h2>이 자리에 광고를 실어보세요</h2>
+    <p>단가·기간·소재 규격은 문의 주시면 상세 통계와 함께 안내드립니다.</p>
+    <a class="btn" id="contact"
+       href="mailto:park8933@gmail.com?subject=%5BDutyBox%20%EA%B4%91%EA%B3%A0%20%EB%AC%B8%EC%9D%98%5D&body=%EA%B4%91%EA%B3%A0%EC%A3%BC%2Fbrand%3A%0A%ED%9D%AC%EB%A7%9D%20%EA%B8%B0%EA%B0%84%3A%0A%EB%AC%B8%EC%9D%98%20%EB%82%B4%EC%9A%A9%3A%0A">광고 문의하기 →</a>
+    <div class="points">
+      <div class="point"><span class="check">✓</span><span><b>초타겟 니치</b> — 도달하기 어려운 특정 전문 직군 (상세는 문의)</span></div>
+      <div class="point"><span class="check">✓</span><span><b>매일 사용</b> — 스케줄 확인용이라 재방문율 높음</span></div>
+      <div class="point"><span class="check">✓</span><span><b>단독 슬롯</b> — 한 화면에 배너 1개, 경쟁 노출 없음</span></div>
+      <div class="point"><span class="check">✓</span><span><b>투명한 지표</b> — 위 수치는 실시간 자동 갱신</span></div>
+    </div>
+  </div>
+
+  <footer>
+    DutyBox · 근무 스케줄 관리 앱<br>
+    수치는 개인정보를 제외한 집계값이며 자동 갱신됩니다. · <a href="mailto:park8933@gmail.com">park8933@gmail.com</a>
+  </footer>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // ── 설정 ──────────────────────────────────────────────────
+  const CONFIG = {
+    SUPABASE_URL: 'https://zaotbkdzpnphgxgsqbgl.supabase.co',
+    SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inphb3Ria2R6cG5waGd4Z3NxYmdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNTc0NDAsImV4cCI6MjA5MTYzMzQ0MH0.-88kykrRKk8mGVucgtqQxYnjw68i6hc0iuj97DHLtQU', // ← .env 의 SUPABASE_ANON_KEY 값 붙여넣기
+    REFRESH_MS: 60000,     // 자동 갱신 주기(ms). 60초.
+    ROUND_NUMBERS: false,  // true → 헤드라인 수치를 "1,200+" 식 반올림(작은 수치 부담 시).
+  };
+
+  // 소속 항공사 코드 → 표시명 (RPC 가 코드로 저장돼 있어도 예쁘게)
+  const AIRLINE_LABELS = {
+    'KE':'대한항공','OZ':'아시아나항공','7C':'제주항공','LJ':'진에어',
+    'TW':'티웨이항공','BX':'에어부산','RS':'에어서울','YP':'에어프레미아',
+    'ZE':'이스타항공','BR':'에바항공','미설정':'기타','':'기타',
+  };
+
+  // RPC/키 미설정 시 화면 완성용 예시값 (badge 로 "예시" 표시됨)
+  const PLACEHOLDER = {
+    generated_at:null, community_size:2400, dau:320, wau:900, mau:1800,
+    stickiness_pct:18, new_last_7d:60,
+    audience_mix:[
+      {label:'대한항공',pct:34.0},{label:'아시아나항공',pct:22.0},
+      {label:'제주항공',pct:12.0},{label:'진에어',pct:9.0},{label:'기타',pct:23.0}
+    ],
+    activity_14d:[12,18,9,22,15,30,25,19,28,33,21,26,31,40],
+  };
+
+  // ── Supabase 클라이언트 ───────────────────────────────────
+  let client = null;
+  try {
+    if (window.supabase && CONFIG.SUPABASE_ANON_KEY && !CONFIG.SUPABASE_ANON_KEY.startsWith('PASTE_')) {
+      client = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+    }
+  } catch(e){ console.warn('[ad-stats] client init', e); }
+
+  async function fetchStats(){
+    if(!client) return null;
+    try{
+      const { data, error } = await client.rpc('public_ad_audience_stats');
+      if(error){ console.warn('[ad-stats] rpc', error); return null; }
+      return data;
+    }catch(e){ console.warn('[ad-stats] fetch', e); return null; }
+  }
+
+  // ── 표기 헬퍼 ─────────────────────────────────────────────
+  function niceRound(n){
+    if(n<100) return Math.floor(n/10)*10;
+    if(n<1000) return Math.floor(n/50)*50;
+    return Math.floor(n/100)*100;
+  }
+  function fmt(n){
+    if(CONFIG.ROUND_NUMBERS) return niceRound(n).toLocaleString('ko-KR')+'+';
+    return Number(n).toLocaleString('ko-KR');
+  }
+  function animateNumber(el, to, suffix){
+    suffix = suffix || '';
+    const from = Number(el.dataset.val || 0);
+    if(from === to){ el.textContent = fmt(to)+suffix; return; }
+    const start = performance.now(), dur = 700;
+    function tick(now){
+      const t = Math.min(1,(now-start)/dur);
+      const eased = 1-Math.pow(1-t,3);
+      el.textContent = fmt(Math.round(from+(to-from)*eased))+suffix;
+      if(t<1) requestAnimationFrame(tick); else el.dataset.val = to;
+    }
+    requestAnimationFrame(tick);
+  }
+
+  // ── 렌더 ─────────────────────────────────────────────────
+  function render(d, isLive){
+    animateNumber(document.getElementById('v-community'), d.community_size||0);
+    animateNumber(document.getElementById('v-mau'), d.mau||0);
+    animateNumber(document.getElementById('v-dau'), d.dau||0);
+    animateNumber(document.getElementById('v-wau'), d.wau||0);
+    const sticky = document.getElementById('v-sticky');
+    if(d.stickiness_pct==null){ sticky.textContent='—'; sticky.dataset.val=0; }
+    else animateNumber(sticky, d.stickiness_pct, '%');
+
+    const newEl = document.getElementById('v-new');
+    newEl.textContent = (d.new_last_7d!=null)
+      ? '최근 7일 신규 +'+Number(d.new_last_7d).toLocaleString('ko-KR')
+      : '가입한 활성 사용자';
+
+    renderMix(d.audience_mix||[]);
+    renderSpark(d.activity_14d||[]);
+    setLive(isLive, d.generated_at);
+  }
+
+  function renderMix(mix){
+    const wrap = document.getElementById('mix');
+    const sorted = [...mix].sort((a,b)=>
+      ((a.label==='기타')-(b.label==='기타')) || (b.pct-a.pct));
+    if(!sorted.length){ wrap.innerHTML='<div class="bar-pct">데이터 없음</div>'; return; }
+    wrap.innerHTML = sorted.map(m=>{
+      const label = AIRLINE_LABELS[m.label] || m.label;
+      const pct = Math.max(0, Number(m.pct)||0);
+      return '<div class="bar-row">'
+        +'<span class="bar-label">'+label+'</span>'
+        +'<span class="bar-track"><span class="bar-fill" style="width:'+Math.min(100,pct)+'%"></span></span>'
+        +'<span class="bar-pct">'+pct+'%</span></div>';
+    }).join('');
+  }
+
+  function renderSpark(series){
+    const svg = document.getElementById('spark');
+    const defs = svg.querySelector('defs').outerHTML;
+    if(!series || !series.length){ svg.innerHTML = defs; return; }
+    const w=300,h=64,pad=5;
+    const max=Math.max(...series,1), min=Math.min(...series,0);
+    const range = (max-min)||1;
+    const pts = series.map((v,i)=>{
+      const x = pad + (series.length>1 ? (i/(series.length-1)) : 0)*(w-2*pad);
+      const y = h-pad - ((v-min)/range)*(h-2*pad);
+      return x.toFixed(1)+','+y.toFixed(1);
+    });
+    const line = pts.join(' ');
+    const area = pad+','+(h-pad)+' '+line+' '+(w-pad)+','+(h-pad);
+    svg.innerHTML = defs
+      + '<polygon points="'+area+'" fill="url(#sparkgrad)" opacity="0.22"/>'
+      + '<polyline points="'+line+'" fill="none" stroke="#38bdf8" stroke-width="2" '
+      + 'stroke-linejoin="round" stroke-linecap="round"/>';
+  }
+
+  function setLive(isLive, generatedAt){
+    const badge = document.getElementById('livebadge');
+    const stamp = document.getElementById('updated');
+    if(isLive){
+      badge.className='badge live'; badge.textContent='실시간';
+      const t = generatedAt ? new Date(generatedAt) : new Date();
+      stamp.textContent = '마지막 업데이트 ' + t.toLocaleString('ko-KR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    } else {
+      badge.className='badge demo'; badge.textContent='예시 데이터';
+      stamp.textContent = '실데이터 연결 대기 중 — 페이지 상단 주석의 배포 3단계를 따르세요';
+    }
+  }
+
+  // ── 루프 ─────────────────────────────────────────────────
+  async function refresh(){
+    const live = await fetchStats();
+    render(live || PLACEHOLDER, !!live);
+  }
+  refresh();
+  setInterval(refresh, CONFIG.REFRESH_MS);
+  // 탭 복귀 시 즉시 갱신
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) refresh(); });
+</script>
+</body>
+</html>
